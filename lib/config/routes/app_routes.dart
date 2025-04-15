@@ -7,14 +7,12 @@ import '../../features/custom_exercise/screens/custom_exercise_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
 class AppRoutes {
-  static Map<String, WidgetBuilder> get routes {
-    return {
-      '/': (context) => DashboardScreen(),
-      '/workout_log': (context) => WorkoutLogScreen(),
-      '/analytics': (context) => AnalyticsScreen(),
-      '/history': (context) => HistoryScreen(),
-      '/add_exercise': (context) => CustomExerciseScreen(),
-      '/settings': (context) => SettingsScreen(),
-    };
-  }
+  static final Map<String, WidgetBuilder> routes = {
+    '/dashboard': (context) => DashboardScreen(),
+    '/workout_log': (context) => WorkoutLogScreen(),
+    '/analytics': (context) => AnalyticsScreen(),
+    '/history': (context) => HistoryScreen(),
+    '/add_exercise': (context) => CustomExerciseScreen(),
+    '/settings': (context) => SettingsScreen(),
+  };
 }

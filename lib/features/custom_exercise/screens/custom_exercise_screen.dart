@@ -6,6 +6,10 @@ import '../../../core/providers/exercise_provider.dart';
 import '../widgets/muscle_group_selector.dart';
 
 class CustomExerciseScreen extends StatefulWidget {
+  final Exercise? exercise;
+
+  CustomExerciseScreen({this.exercise});
+
   @override
   _CustomExerciseScreenState createState() => _CustomExerciseScreenState();
 }
@@ -19,6 +23,17 @@ class _CustomExerciseScreenState extends State<CustomExerciseScreen> {
   final uuid = Uuid();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.exercise != null) {
+      _nameController.text = widget.exercise!.name;
+      _selectedMuscleGroup = widget.exercise!.muscleGroup;
+      _isFavorite = widget.exercise!.isFavorite;
+      _notes = widget.exercise!.notes;
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
@@ -30,22 +45,35 @@ class _CustomExerciseScreenState extends State<CustomExerciseScreen> {
     }
 
     final exerciseProvider = Provider.of<ExerciseProvider>(context, listen: false);
-    
-    final newExercise = Exercise(
-      id: uuid.v4(),
-      name: _nameController.text.trim(),
-      muscleGroup: _selectedMuscleGroup,
-      isFavorite: _isFavorite,
-      notes: _notes,
-      isCustom: true,
-    );
-    
-    exerciseProvider.addExercise(newExercise);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Exercise added successfully')),
-    );
-    
+
+    if (widget.exercise != null) {
+      // Update existing exercise
+      final updatedExercise = widget.exercise!.copyWith(
+        name: _nameController.text.trim(),
+        muscleGroup: _selectedMuscleGroup,
+        isFavorite: _isFavorite,
+        notes: _notes,
+      );
+      exerciseProvider.updateExercise(updatedExercise);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Exercise updated successfully')),
+      );
+    } else {
+      // Add new exercise
+      final newExercise = Exercise(
+        id: uuid.v4(),
+        name: _nameController.text.trim(),
+        muscleGroup: _selectedMuscleGroup,
+        isFavorite: _isFavorite,
+        notes: _notes,
+        isCustom: true,
+      );
+      exerciseProvider.addExercise(newExercise);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Exercise added successfully')),
+      );
+    }
+
     Navigator.pop(context);
   }
 
@@ -55,7 +83,7 @@ class _CustomExerciseScreenState extends State<CustomExerciseScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Custom Exercise'),
+        title: Text(widget.exercise != null ? 'Edit Exercise' : 'Add Custom Exercise'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -133,7 +161,7 @@ class _CustomExerciseScreenState extends State<CustomExerciseScreen> {
                 child: ElevatedButton(
                   onPressed: _saveExercise,
                   child: Text(
-                    'Save Exercise',
+                    widget.exercise != null ? 'Update Exercise' : 'Save Exercise',
                     style: TextStyle(fontSize: 16),
                   ),
                   style: ElevatedButton.styleFrom(

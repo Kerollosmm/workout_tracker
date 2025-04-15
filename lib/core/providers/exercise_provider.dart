@@ -6,19 +6,36 @@ import '../models/exercise.dart';
 class ExerciseProvider with ChangeNotifier {
   final Box<Exercise> _exercisesBox = Hive.box<Exercise>('exercises');
   final uuid = Uuid();
-  
-  // Constructor to ensure built-in exercises exist
+  bool _isInitialized = false;
+
   ExerciseProvider() {
-    _ensureDefaultExercises();
+    print("ExerciseProvider: Constructor called");
+    // Don't call _ensureDefaultExercises() here
+    // Instead, defer it to an async method
   }
-  
+
+  // Create a method to initialize data that can be called after widget is built
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      print("ExerciseProvider: Starting initialization...");
+      await _ensureDefaultExercises();
+      _isInitialized = true;
+      print("ExerciseProvider: Initialization complete");
+      notifyListeners();
+    } catch (e) {
+      print("ExerciseProvider: Error during initialization: $e");
+    }
+  }
+
   Future<void> _ensureDefaultExercises() async {
     // Check if default exercises need to be added
     if (_exercisesBox.isEmpty) {
       await _addDefaultExercises();
     }
   }
-  
+
   Future<void> _addDefaultExercises() async {
     final defaultExercises = [
       Exercise(
@@ -44,23 +61,23 @@ class ExerciseProvider with ChangeNotifier {
       ),
       // Add more default exercises as needed
     ];
-    
+
     for (final exercise in defaultExercises) {
       await _exercisesBox.add(exercise);
     }
-    
+
     notifyListeners();
   }
-  
+
   List<Exercise> get exercises => _exercisesBox.values.toList();
-  
+
   List<Exercise> getExercisesByMuscleGroup(String muscleGroup) {
     return exercises.where((e) => e.muscleGroup == muscleGroup).toList();
   }
-  
-  List<Exercise> get favoriteExercises => 
-    exercises.where((e) => e.isFavorite).toList();
-  
+
+  List<Exercise> get favoriteExercises =>
+      exercises.where((e) => e.isFavorite).toList();
+
   Exercise? getExerciseById(String id) {
     try {
       return _exercisesBox.values.firstWhere((e) => e.id == id);
@@ -68,20 +85,21 @@ class ExerciseProvider with ChangeNotifier {
       return null;
     }
   }
-  
+
   Future<void> addExercise(Exercise exercise) async {
     await _exercisesBox.add(exercise);
     notifyListeners();
   }
-  
+
   Future<void> updateExercise(Exercise exercise) async {
-    final index = _exercisesBox.values.toList().indexWhere((e) => e.id == exercise.id);
+    final index =
+        _exercisesBox.values.toList().indexWhere((e) => e.id == exercise.id);
     if (index != -1) {
       await _exercisesBox.putAt(index, exercise);
       notifyListeners();
     }
   }
-  
+
   Future<void> toggleFavorite(String id) async {
     final exercise = getExerciseById(id);
     if (exercise != null) {
@@ -89,9 +107,10 @@ class ExerciseProvider with ChangeNotifier {
       await updateExercise(exercise);
     }
   }
-  
+
   Future<void> deleteExercise(String id) async {
-    final index = _exercisesBox.values.toList().indexWhere((e) => e.id == id);
+    final index =
+        _exercisesBox.values.toList().indexWhere((e) => e.id == id);
     if (index != -1) {
       // Only allow deleting custom exercises
       final exercise = _exercisesBox.getAt(index);
@@ -101,7 +120,7 @@ class ExerciseProvider with ChangeNotifier {
       }
     }
   }
-  
+
   List<String> get allMuscleGroups {
     return [
       'Chest',

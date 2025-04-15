@@ -81,53 +81,32 @@ class _WorkoutLogScreenState extends State<WorkoutLogScreen> {
   }
 
   void _saveWorkout() async {
-    if (selectedExercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please add at least one exercise')),
+    final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
+
+    if (_existingWorkout != null) {
+      // Update existing workout
+      final updatedWorkout = _existingWorkout!.copyWith(
+        exercises: selectedExercises,
+        notes: notes,
       );
-      return;
-    }
-
-    bool hasEmptySets = false;
-    for (final exercise in selectedExercises) {
-      if (exercise.sets.isEmpty) {
-        hasEmptySets = true;
-        break;
-      }
-
-      for (final set in exercise.sets) {
-        if (set.weight <= 0 || set.reps <= 0) {
-          hasEmptySets = true;
-          break;
-        }
-      }
-
-      if (hasEmptySets) break;
-    }
-
-    if (hasEmptySets) {
+      await workoutProvider.updateWorkout(updatedWorkout);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please complete all set information')),
+        SnackBar(content: Text('Workout updated successfully')),
       );
-      return;
+    } else {
+      // Add new workout
+      final newWorkout = Workout(
+        id: uuid.v4(),
+        date: workoutDate,
+        exercises: selectedExercises,
+        notes: notes,
+      );
+      await workoutProvider.addWorkout(newWorkout);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Workout saved successfully')),
+      );
     }
 
-    final workout = Workout(
-      id: uuid.v4(),
-      date: workoutDate,
-      exercises: selectedExercises,
-      notes: notes,
-    );
-
-    final workoutProvider = Provider.of<WorkoutProvider>(
-      context,
-      listen: false,
-    );
-    await workoutProvider.addWorkout(workout);
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Workout saved successfully')));
     Navigator.pop(context);
   }
 

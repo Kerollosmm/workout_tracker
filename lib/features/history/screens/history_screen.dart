@@ -11,7 +11,7 @@ class HistoryScreen extends StatelessWidget {
     final workoutProvider = Provider.of<WorkoutProvider>(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final workouts = workoutProvider.workouts;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Workout History'),
@@ -24,15 +24,22 @@ class HistoryScreen extends StatelessWidget {
               itemCount: workouts.length,
               itemBuilder: (context, index) {
                 final workout = workouts[index];
-                return _buildWorkoutHistoryItem(context, workout, settingsProvider.weightUnit);
+                return Dismissible(
+                  key: Key(workout.id),
+                  onDismissed: (_) {
+                    Provider.of<WorkoutProvider>(context, listen: false).deleteWorkout(workout.id, context);
+                  },
+                  background: Container(color: Colors.red),
+                  child: _buildWorkoutHistoryItem(context, workout, settingsProvider.weightUnit),
+                );
               },
             ),
     );
   }
-  
+
   Widget _buildWorkoutHistoryItem(BuildContext context, Workout workout, String weightUnit) {
     final dateFormat = DateFormat('EEEE, MMMM d, y');
-    
+
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ExpansionTile(
@@ -70,7 +77,7 @@ class HistoryScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   // Set details
                   Padding(
                     padding: const EdgeInsets.only(left: 24.0, top: 8.0),
@@ -85,7 +92,7 @@ class HistoryScreen extends StatelessWidget {
                           ],
                         ),
                         Divider(height: 8),
-                        
+
                         // Set rows
                         ...List.generate(exercise.sets.length, (setIndex) {
                           final set = exercise.sets[setIndex];
@@ -100,13 +107,13 @@ class HistoryScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   Divider(),
                 ],
               ),
             );
           }).toList(),
-          
+
           // Notes section if available
           if (workout.notes != null && workout.notes!.isNotEmpty)
             Padding(

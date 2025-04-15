@@ -56,26 +56,75 @@ class WorkoutProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateWorkout(Workout workout) async {
-    final index = _workoutsBox.values.toList().indexWhere(
-      (w) => w.id == workout.id,
-    );
-    if (index != -1) {
-      await _workoutsBox.putAt(index, workout);
-      notifyListeners();
+  Future<bool> updateWorkout(Workout workout) async {
+    try {
+      final index = _workoutsBox.values.toList().indexWhere((w) => w.id == workout.id);
+      if (index != -1) {
+        await _workoutsBox.putAt(index, workout);
+        notifyListeners();
+        return true;
+      } else {
+        print('Workout not found for update: \\${workout.id}');
+        return false;
+      }
+    } catch (e) {
+      print('Error updating workout: $e');
+      return false;
     }
   }
 
-  Future<void> deleteWorkout(String id, BuildContext context) async {
-    final index = _workoutsBox.values.toList().indexWhere((w) => w.id == id);
-    if (index != -1) {
-      await _workoutsBox.deleteAt(index);
-      notifyListeners();
-      // Also clear analytics selection if deleted workout was being shown
-      Provider.of<AnalyticsProvider>(
-        context,
-        listen: false,
-      ).setSelectedExerciseId(null);
+  Future<bool> editWorkout({
+    required String workoutId,
+    DateTime? newDate,
+    List<WorkoutExercise>? newExercises,
+    int? newDuration,
+    String? newNotes,
+  }) async {
+    try {
+      final workout = getWorkoutById(workoutId);
+      if (workout == null) {
+        print('Workout not found for edit: $workoutId');
+        return false;
+      }
+      final updatedWorkout = Workout(
+        id: workout.id,
+        date: newDate ?? workout.date,
+        exercises: newExercises ?? workout.exercises,
+        duration: newDuration ?? workout.duration,
+        notes: newNotes ?? workout.notes,
+      );
+      return await updateWorkout(updatedWorkout);
+    } catch (e) {
+      print('Error editing workout: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteWorkout(String id, BuildContext context) async {
+    try {
+      final index = _workoutsBox.values.toList().indexWhere((w) => w.id == id);
+      if (index != -1) {
+        final deletedWorkout = _workoutsBox.getAt(index);
+        await _workoutsBox.deleteAt(index);
+        notifyListeners();
+        try {
+          final analyticsProvider = Provider.of<AnalyticsProvider>(context, listen: false);
+          analyticsProvider.clearCachedDataForWorkout(id);
+          final dashboardProvider = Provider.of<dynamic>(context, listen: false);
+          if (dashboardProvider.refreshData != null) dashboardProvider.refreshData();
+          final timeFilterProvider = Provider.of<dynamic>(context, listen: false);
+          if (timeFilterProvider.refreshFilters != null) timeFilterProvider.refreshFilters();
+        } catch (e) {
+          print('Error clearing provider references: $e');
+        }
+        return true;
+      } else {
+        print('Workout with ID $id not found for deletion');
+        return false;
+      }
+    } catch (e) {
+      print('Error deleting workout: $e');
+      return false;
     }
   }
 

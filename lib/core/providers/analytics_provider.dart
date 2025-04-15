@@ -3,8 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:collection/collection.dart';
-import 'package:workout_tracker/features/analytics/widgets/time_filter_selector.dart';
+import 'package:workout_tracker/features/analytics/providers/time_filter_provider.dart';
 import '../models/workout.dart';
 import 'workout_provider.dart';
 
@@ -37,6 +36,19 @@ class AnalyticsProvider with ChangeNotifier {
 
   void setSelectedMuscleGroup(String? muscleGroup) {
     _selectedMuscleGroup = muscleGroup;
+    notifyListeners();
+  }
+
+  // Reset all state
+  void resetState() {
+    _selectedExerciseId = null;
+    _selectedMuscleGroup = null;
+    notifyListeners();
+  }
+
+  // Clear cached data for a specific workout
+  void clearCachedDataForWorkout(String workoutId) {
+    // For this implementation, just notify listeners to force refresh
     notifyListeners();
   }
 
@@ -140,7 +152,6 @@ class AnalyticsProvider with ChangeNotifier {
     // Group workouts by month
     for (var workout in workouts) {
       final monthKey = DateFormat('yyyy-MM').format(workout.date);
-      final readableMonth = DateFormat('MMM yyyy').format(workout.date);
 
       if (counts.containsKey(monthKey)) {
         counts[monthKey] = counts[monthKey]! + 1;

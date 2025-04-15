@@ -1,23 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import 'package:workout_tracker/features/analytics/widgets/time_filter_selector.dart';
-import 'package:workout_tracker/features/dashboard/widgets/ime_filter_selector.dart';
+import 'package:workout_tracker/core/providers/exercise_provider.dart';
+import 'package:workout_tracker/features/dashboard/providers/dashboard_provider.dart';
 import '../../../core/providers/workout_provider.dart';
 import '../widgets/progress_chart_widget.dart';
 import '../widgets/workout_summary_card.dart';
 import '../widgets/quick_stats_widget.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
+  @override
+  State<DashboardScreen> createState() => DashboardScreenState();
+}
+
+class DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize providers after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeProviders();
+    });
+  }
+
+  Future<void> _initializeProviders() async {
+    try {
+      // Initialize ExerciseProvider first
+      final exerciseProvider = context.read<ExerciseProvider>();
+      await exerciseProvider.initialize();
+
+      // Initialize DashboardProvider
+      final dashboardProvider = context.read<DashboardProvider>();
+      await dashboardProvider.loadInitialData();
+    } catch (e) {
+      print("Error initializing providers: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final workoutProvider = Provider.of<WorkoutProvider>(context);
     final today = DateTime.now();
-    // Add at top of build method
-    final timeFilter = Provider.of<TimeFilterProvider>(context);
-    final filteredWorkouts = workoutProvider.getFilteredWorkouts(
-      timeFilter.dateRange,
-    );
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +77,6 @@ class DashboardScreen extends StatelessWidget {
 
               // Weekly Progress Chart
               Text('This Week', style: Theme.of(context).textTheme.titleLarge),
-              TimeFilterSelector(),
 
               SizedBox(height: 8),
               ProgressChartWidget(

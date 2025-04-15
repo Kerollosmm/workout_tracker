@@ -5,21 +5,19 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:workout_tracker/config/constants/app_constants.dart';
+import 'package:workout_tracker/config/routes/app_routes.dart';
+import 'package:workout_tracker/core/models/exercise.dart';
+import 'package:workout_tracker/core/models/user_settings.dart';
+import 'package:workout_tracker/core/models/workout.dart';
+import 'package:workout_tracker/core/models/workout_set.dart';
+import 'package:workout_tracker/core/providers/analytics_provider.dart';
+import 'package:workout_tracker/core/providers/exercise_provider.dart';
+import 'package:workout_tracker/core/providers/settings_provider.dart';
+import 'package:workout_tracker/core/providers/workout_provider.dart';
+import 'package:workout_tracker/core/services/notification_service.dart';
 
-import 'config/routes/app_routes.dart';
-import 'config/themes/app_theme.dart';
-import 'core/models/exercise.dart';
-import 'core/models/workout.dart';
-import 'core/models/workout_set.dart';
-import 'core/models/user_settings.dart';
-import 'core/providers/workout_provider.dart';
-import 'core/providers/exercise_provider.dart';
-import 'core/providers/analytics_provider.dart';
-import 'core/providers/settings_provider.dart';
-import 'core/services/notification_service.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
 import 'package:workout_tracker/features/analytics/providers/time_filter_provider.dart';
-import 'package:workout_tracker/features/dashboard/providers/dashboard_provider.dart';
+import 'package:workout_tracker/features/dashboard/screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -114,12 +112,6 @@ class MyApp extends StatelessWidget {
             Provider.of<TimeFilterProvider>(context, listen: false),
           ),
         ),
-        ChangeNotifierProvider(
-          create: (context) => DashboardProvider(
-            Provider.of<WorkoutProvider>(context, listen: false),
-            Provider.of<ExerciseProvider>(context, listen: false),
-          ),
-        ),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settingsProvider, _) {
@@ -127,11 +119,33 @@ class MyApp extends StatelessWidget {
             title: 'Workout Tracker',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: settingsProvider.isDarkMode 
-                ? ThemeMode.dark 
-                : ThemeMode.light,
+            themeMode: settingsProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             routes: AppRoutes.routes,
-            initialRoute: '/dashboard', // Define the initial route
+            home: Scaffold(
+              body: DashboardScreen(),
+              bottomNavigationBar: BottomNavigationBar(
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.dashboard),
+                    label: 'Dashboard',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.fitness_center),
+                    label: 'Workout Log',
+                  ),
+                ],
+                onTap: (index) {
+                  switch (index) {
+                    case 0:
+                      Navigator.pushNamed(context, '/dashboard');
+                      break;
+                    case 1:
+                      Navigator.pushNamed(context, '/workout_log');
+                      break;
+                  }
+                },
+              ),
+            ),
           );
         },
       ),

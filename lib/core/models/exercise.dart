@@ -33,4 +33,24 @@ class Exercise extends HiveObject {
     this.isCustom = false,
     this.iconPath,
   });
+
+  Exercise copyWith({
+    String? id,
+    String? name,
+    String? muscleGroup,
+    bool? isFavorite,
+    String? notes,
+    bool? isCustom,
+    String? iconPath,
+  }) {
+    return Exercise(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      muscleGroup: muscleGroup ?? this.muscleGroup,
+      isFavorite: isFavorite ?? this.isFavorite,
+      notes: notes ?? this.notes,
+      isCustom: isCustom ?? this.isCustom,
+      iconPath: iconPath ?? this.iconPath,
+    );
+  }
 }
